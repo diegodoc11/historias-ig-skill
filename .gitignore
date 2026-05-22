@@ -8,6 +8,7 @@ fotos/*
 !fotos/.gitkeep
 config.json
 catalogo.json
+catalogo_detallado.json
 plan.json
 fonts/*.ttf
 fonts/*.otf

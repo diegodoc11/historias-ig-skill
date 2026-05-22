@@ -1,149 +1,153 @@
-# Historias IG Skill — Claude Code
+# 📲 Historias IG Skill — Claude Code
 
-Genera historias de Instagram profesionales para tu negocio con un solo comando en Claude Code.
+> Genera secuencias de **historias de Instagram profesionales** para tu negocio con un solo comando en Claude Code. Le dictas la idea, y la IA elige la estructura narrativa, escribe el copy y crea todas las imágenes.
 
-El skill te hace preguntas la primera vez para entender tu marca, y después solo necesitas decirle el tema del día.
-
----
-
-## ¿Qué genera?
-
-6 slides listos para publicar (1080×1920 px), con:
-- Tu foto de fondo o imagen generada con IA
-- Tipografía de impacto con tus colores de marca
-- Estructura narrativa probada: hook → problema → solución → beneficios → prueba → CTA
-- Palabra clave de CTA lista para tu automatización de DMs
+Esta es una versión **mejorada y mantenida por [Diego Osorio (@soydiegoosorio)](https://instagram.com/soydiegoosorio)**, basada en el excelente trabajo original de **Horizontes IA** (ver [Créditos](#-créditos)).
 
 ---
 
-## Requisitos
+## ✨ ¿Qué hace?
 
-- [Claude Code](https://claude.ai/code) instalado (con suscripción Pro o Max)
-- Python 3.10+
-- macOS o Linux *(Windows requiere WSL — ver nota abajo)*
-- *(Opcional)* Cuenta de [Kie AI](https://kie.ai) para fondos generados con IA
+A partir de un tema, genera **5–7 slides listos para publicar** (1080×1920 px) con:
 
-> **Windows:** Usa PowerShell y corre `.\setup.ps1` (ver sección de instalación).
+- 🧠 **Estructura narrativa** elegida automáticamente entre 35 fórmulas virales (hook → dolor → solución → demo → resultado → CTA).
+- ✍️ **Copy persuasivo** adaptado a tu marca y objetivo (lead magnet, urgencia, prueba social, etc.).
+- 🖼️ **Fondos** con tus propias fotos **o** generados con IA (Kie AI).
+- 🎨 Tipografía de impacto con **tus colores de marca**.
+- 🔑 **Palabra clave de CTA** lista para tu automatización de DMs.
 
 ---
 
-## Instalación
+## 🚀 Mejoras de esta versión
 
-### Opción A — Instalación con Claude Code (recomendado)
+- 🔠 **Autoajuste de texto:** el copy largo se escala solo para que siempre quepa y se lea.
+- 🎯 **Colocación inteligente:** el texto se ubica en la zona más despejada del fondo, **sin tapar tu cara**.
+- 🔄 **Corrección de rotación EXIF:** las fotos de cámara/celular ya no salen giradas.
+- 💸 **Modelo económico por defecto** (`google/nano-banana`, ~$0.02/img) y opción premium (`nano-banana-2`) para ocasiones especiales.
+- 📲 **Envío a tu celular por Telegram:** cuando un set te gusta, te llega al teléfono para subirlo en segundos.
+- ⚙️ **`.env` que sí funciona** (carga sin dependencias) y verbo de CTA configurable (“Comenta” / “Responde”).
+- 🪟 **Compatibilidad con Windows nativo** mejorada (UTF-8, rutas).
 
-Abre Claude Code, pega este mensaje y envíalo:
+---
+
+## 📋 Requisitos
+
+- [Claude Code](https://claude.com/claude-code) instalado
+- **Python 3.10+**
+- macOS, Linux o **Windows**
+- *(Opcional)* Cuenta de [Kie AI](https://kie.ai) para fondos con IA
+- *(Opcional)* Un bot de [Telegram](https://telegram.org) para recibir los sets en tu celular
+
+---
+
+## ⚡ Instalación
+
+### Opción A — con Claude Code (recomendado)
+
+Abre Claude Code, pega esto y envíalo:
 
 ```
-Clona https://github.com/santmun/historias-ig-skill.git en ~/historias-ig y corre el setup automáticamente según mi sistema operativo
+Clona https://github.com/diegodoc11/historias-ig-skill.git en ~/historias-ig y corre el setup automáticamente según mi sistema operativo
 ```
 
-Claude clonará el repositorio y ejecutará el instalador por ti.
+Cuando termine, **cierra y vuelve a abrir Claude Code** para que detecte el skill.
 
-Cuando termine, **cierra y vuelve a abrir Claude Code** para que detecte el nuevo skill.
+### Opción B — manual
 
----
-
-### Opción B — Instalación manual
-
-**1. Clona el repositorio**
 ```bash
-git clone https://github.com/santmun/historias-ig-skill.git ~/historias-ig
+git clone https://github.com/diegodoc11/historias-ig-skill.git ~/historias-ig
 cd ~/historias-ig
 ```
 
-**2. Corre el instalador**
-
-macOS / Linux:
+**macOS / Linux:**
 ```bash
 chmod +x setup.sh && ./setup.sh
 ```
 
-Windows (PowerShell):
+**Windows (PowerShell):**
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 .\setup.ps1
 ```
 
-**3. Reinicia Claude Code** para que detecte el nuevo skill `/historias-ig`.
+Luego **reinicia Claude Code** para que aparezca el comando `/historias-ig`.
 
 ---
 
-### *(Opcional)* Agrega Kie AI para fondos generados con IA
+## 🔧 Configuración opcional
 
-Si quieres que el skill genere fondos e ilustraciones automáticamente, abre `.env` y agrega tu key de [Kie AI](https://kie.ai):
-
+### Kie AI (fondos con IA)
+Copia `.env.example` a `.env` y agrega tu clave:
 ```
-KIE_AI_API_KEY=tu_key_aqui
+KIE_AI_API_KEY=tu_clave_aqui
 ```
+Sin esto, el skill funciona perfecto usando tus propias fotos.
 
-Sin esto, el skill funciona perfectamente usando tus propias fotos como fondo.
-
----
-
-## Primer uso
-
-1. Pon al menos una foto tuya (o de tu negocio) en la carpeta `fotos/`
-2. Abre Claude Code en la carpeta del proyecto:
+### Telegram (recibir los sets en tu celular)
+1. En Telegram, crea un bot con **@BotFather** (`/newbot`) y copia el **token**.
+2. Pégalo en `.env`:
+   ```
+   TELEGRAM_BOT_TOKEN=tu_token_aqui
+   ```
+3. Escríbele “hola” a tu bot y obtén tu *chat id*:
    ```bash
-   claude ~/historias-ig
+   python scripts/telegram_enviar.py --proj-dir . --get-chat-id
    ```
-3. Escribe:
+4. Pega el chat id en `.env` (`TELEGRAM_CHAT_ID=...`).
+5. Para enviarte el último set generado:
+   ```bash
+   python scripts/telegram_enviar.py --proj-dir .
    ```
-   /historias-ig
-   ```
-4. El skill te hará preguntas sobre tu marca una sola vez y se configura automáticamente.
+   *(añade `--doc` para calidad original sin compresión)*
 
 ---
 
-## Uso diario
+## 🎬 Uso
 
 ```
 /historias-ig
 ```
 
-El skill te pregunta el tema del día, crea el guión, genera las imágenes y abre la carpeta con los resultados.
-
----
-
-## Comandos disponibles
+La **primera vez** te hace unas preguntas sobre tu marca (nombre, colores, CTA…) y se configura. Después, solo dile el **tema + objetivo** del día y genera el set en `output/`.
 
 | Comando | Qué hace |
-|---------|----------|
-| `/historias-ig` | Genera historias del día |
+|---|---|
+| `/historias-ig` | Genera las historias del día |
 | `/historias-ig reconfigurar` | Cambia los datos de tu marca |
 | `/historias-ig fotos` | Re-escanea tus fotos disponibles |
 | `/historias-ig ver` | Abre la última carpeta de output |
 
 ---
 
-## Estructura del proyecto
+## 📁 Estructura
 
 ```
 historias-ig/
-├── fotos/          ← Pon aquí tus fotos (JPG, PNG, WEBP)
-├── output/         ← Las historias generadas aparecen aquí
+├── fotos/            ← Pon aquí tus fotos (JPG, PNG, WEBP)
+├── output/           ← Las historias generadas aparecen aquí
 ├── scripts/
-│   ├── generate.py     ← Motor de generación de imágenes
-│   ├── scan_fotos.py   ← Escanea y cataloga tus fotos
-│   └── utils.py        ← Funciones de renderizado
-├── skill/
-│   └── historias-ig.md ← El skill de Claude Code
-├── fonts/          ← Fuentes (instaladas por setup.sh)
-├── .env            ← Tus API keys (NO subir a git)
-├── config.json     ← Tu configuración de marca (generado al primer uso)
-└── setup.sh        ← Instalador automático
+│   ├── generate.py        ← Motor de generación de imágenes
+│   ├── scan_fotos.py      ← Escanea y cataloga tus fotos
+│   ├── utils.py           ← Funciones de renderizado
+│   └── telegram_enviar.py ← Envía un set a tu celular vía Telegram
+├── skill/historias-ig.md  ← El skill de Claude Code
+├── .env                   ← Tus claves (NO se sube a git)
+└── config.json            ← Tu configuración de marca (se crea al primer uso)
 ```
 
----
-
-## Personalización
-
-Después del primer uso, puedes editar `config.json` directamente para ajustar cualquier detalle de tu marca sin pasar por el onboarding otra vez.
+> 🔒 **Privacidad:** `.env`, `config.json` y la carpeta `fotos/` están en `.gitignore`. Tus claves y fotos **nunca** se suben a GitHub.
 
 ---
 
-## Créditos
+## 🪟 Nota para Windows
 
-Skill creado por [Horizontes IA](https://horizontesia.com) — Academia de educación y automatización con IA en español.
+Si al ejecutar ves un error de “Python no encontrado” aunque lo tengas instalado, desactiva los *alias de la Microsoft Store*: **Configuración → Aplicaciones → Alias de ejecución de aplicaciones →** apaga `python.exe` y `python3.exe`. (O instala Python desde [python.org](https://python.org) marcando “Add to PATH”.)
 
-Comunidad: [horizontesia.com/comunidad](https://horizontesia.com/comunidad)
+---
+
+## 🙏 Créditos
+
+- **Skill original:** [Horizontes IA](https://horizontesia.com) — academia de IA y automatización en español · repo original: [github.com/santmun/historias-ig-skill](https://github.com/santmun/historias-ig-skill). Todo el crédito de la idea y la base es suyo.
+- **Versión mejorada y mantenida por:** [Diego Osorio — @soydiegoosorio](https://instagram.com/soydiegoosorio).
+
+Si esta skill te sirve, sígueme en [@soydiegoosorio](https://instagram.com/soydiegoosorio) para más automatizaciones con IA. 🚀

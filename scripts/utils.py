@@ -4,7 +4,7 @@ Canvas: 1080x1920 RGBA
 """
 
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 
 W, H = 1080, 1920
 
@@ -45,7 +45,9 @@ def new_canvas(colors: dict) -> Image.Image:
 
 
 def load_bg(path: str | Path, darken: float = 0.55, blur: int = 0) -> Image.Image:
-    bg = Image.open(path).convert("RGBA")
+    bg = Image.open(path)
+    bg = ImageOps.exif_transpose(bg)   # respeta la orientación EXIF (fotos de cámara/celular)
+    bg = bg.convert("RGBA")
     r = max(W / bg.width, H / bg.height)
     nw, nh = int(bg.width * r), int(bg.height * r)
     bg = bg.resize((nw, nh), Image.LANCZOS)

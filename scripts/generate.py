@@ -46,6 +46,22 @@ from utils import (
 from PIL import Image, ImageDraw
 
 
+def _load_dotenv(proj_dir: Path):
+    """Carga variables desde un archivo .env (sin dependencias externas)."""
+    p = proj_dir / ".env"
+    if not p.exists():
+        return
+    try:
+        for line in p.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+    except Exception:
+        pass
+
+
 def font(proj_dir: Path, size: int, bold: bool = False):
     return _font(proj_dir, size, bold)
 
@@ -55,7 +71,7 @@ def font(proj_dir: Path, size: int, bold: bool = False):
 def kie_generate(prompt: str, api_key: str) -> str | None:
     """Genera imagen con Kie AI y retorna la URL del resultado."""
     payload = json.dumps({
-        "model": "nano-banana-2",
+        "model": "google/nano-banana",
         "input": {
             "prompt": prompt + ", professional quality, no text",
             "aspect_ratio": "9:16",
@@ -122,6 +138,72 @@ def download_image(url: str, dest: Path) -> bool:
 
 # ── Renderizado de slides ──────────────────────────────────────────────────────
 
+def _wrap_lines(draw, text, fnt, max_w):
+    words = str(text).split()
+    lines, cur = [], []
+    for w in words:
+        test = " ".join(cur + [w])
+        if draw.textbbox((0, 0), test, font=fnt)[2] > max_w and cur:
+            lines.append(" ".join(cur)); cur = [w]
+        else:
+            cur.append(w)
+    if cur:
+        lines.append(" ".join(cur))
+    return lines
+
+
+def draw_fitted_block(draw, proj_dir, blocks, y_top, y_bottom, max_w=950, anchor="center"):
+    """Dibuja varios bloques de texto centrados, escalando la fuente para que
+    todo quepa dentro de [y_top, y_bottom]. blocks: lista de dicts con
+    {text, size, bold, color, stroke, gap}."""
+    blocks = [b for b in blocks if b.get("text")]
+    scale = 1.0
+    rendered, total = [], 0
+    for _ in range(16):
+        rendered, total = [], 0
+        for b in blocks:
+            s = max(22, int(b["size"] * scale))
+            fnt = font(proj_dir, s, bold=b.get("bold", False))
+            lines = _wrap_lines(draw, b["text"], fnt, max_w)
+            lh = s + max(6, int(14 * scale))
+            block_h = lh * len(lines)
+            rendered.append((b, fnt, lines, lh))
+            total += block_h + int(b.get("gap", 26) * scale)
+        if total <= (y_bottom - y_top) or scale <= 0.5:
+            break
+        scale *= 0.92
+    y = y_top + max(0, ((y_bottom - y_top) - total) // 2) if anchor == "center" else y_top
+    for b, fnt, lines, lh in rendered:
+        stroke = b.get("stroke", 0)
+        for line in lines:
+            bb = draw.textbbox((0, 0), line, font=fnt)
+            x = (W - (bb[2] - bb[0])) // 2
+            draw.text((x + 3, y + 3), line, font=fnt, fill=(0, 0, 0, 170))
+            draw.text((x, y), line, font=fnt, fill=b["color"],
+                      stroke_width=stroke, stroke_fill=b["color"] if stroke else None)
+            y += lh
+        y += int(b.get("gap", 26) * scale)
+    return y
+
+
+def pick_text_band(img, pos="auto", has_foto=False):
+    """Devuelve (y_top, y_bottom) donde colocar el texto.
+    pos: 'top' | 'center' | 'bottom' | 'auto'. En 'auto' con foto, elige entre
+    la banda superior y la inferior la MÁS OSCURA (mejor contraste y suele
+    evitar la cara, que casi siempre va al centro)."""
+    bands = {"top": (250, 980), "center": (560, 1520), "bottom": (1060, 1830)}
+    if pos in bands:
+        return bands[pos]
+    if not has_foto:
+        return bands["bottom"]
+    from PIL import ImageStat
+
+    def lum(y0, y1):
+        return ImageStat.Stat(img.crop((0, y0, W, y1)).convert("L")).mean[0]
+
+    return bands["top"] if lum(250, 980) <= lum(1060, 1830) else bands["bottom"]
+
+
 def render_slide(slide: dict, idx: int, total: int,
                  proj_dir: Path, cfg: dict, colors: dict,
                  kie_cache: dict, kie_key: str | None,
@@ -150,6 +232,7 @@ def render_slide(slide: dict, idx: int, total: int,
         cache_key = fondo_ia.get("prompt", "")
         if cache_key in kie_cache:
             img = load_bg(kie_cache[cache_key], darken=0.50)
+            gradient_overlay(img, "bottom", 0.65)
         else:
             img = new_canvas(colors)
     else:
@@ -169,24 +252,26 @@ def render_slide(slide: dict, idx: int, total: int,
         # Etiqueta en la parte superior
         draw_pill(draw, cfg.get("etiqueta_hook", "NUEVA HISTORIA"), 120,
                   font(proj_dir, 34), PRIMARY)
-        # Título grande centrado en la zona inferior (60% hacia abajo)
-        y = 820
-        y = draw_text(draw, titulo, y, font(proj_dir, 96, bold=True), WHITE,
-                      max_w=960, stroke=1)
-        if subtitulo:
-            y += 20
-            draw_text(draw, subtitulo, y, font(proj_dir, 80), PRIMARY,
-                      max_w=960, stroke=2)
+        # Título + subtítulo + extra, autoajustados a la banda más despejada
+        y_top, y_bottom = pick_text_band(img, slide.get("texto_pos", "auto"), bool(foto))
+        draw_fitted_block(draw, proj_dir, [
+            {"text": titulo,    "size": 70, "bold": True,  "color": WHITE,   "stroke": 1, "gap": 20},
+            {"text": subtitulo, "size": 50, "bold": False, "color": PRIMARY, "stroke": 1, "gap": 16},
+            {"text": texto_extra, "size": 40, "bold": False, "color": DIM,   "gap": 0},
+        ], y_top=y_top, y_bottom=y_bottom)
 
     elif tipo == "cta":
         cta_palabra = slide.get("cta_palabra", "PALABRA")
+        cta_verbo = slide.get("cta_verbo") or (cfg.get("cta_formato") or "Responde").split()[0]
         nombre_marca = cfg.get("instagram_user") or cfg.get("nombre_marca", "@tumarca")
-        y = 700
-        draw_text(draw, titulo, y, font(proj_dir, 86, bold=True), WHITE, max_w=900)
-        y += 160
-        draw_text(draw, "Responde", y, font(proj_dir, 68), DIM)
-        y += 100
-        box_w, box_h = 520, 120
+        # Pregunta (título) en la zona superior-media, autoajustada
+        y = draw_fitted_block(draw, proj_dir, [
+            {"text": titulo, "size": 64, "bold": True, "color": WHITE, "stroke": 1, "gap": 0},
+        ], y_top=440, y_bottom=740, anchor="top")
+        y += 30
+        draw_text(draw, cta_verbo, y, font(proj_dir, 60), DIM)
+        y += 92
+        box_w, box_h = 580, 120
         bx = (W - box_w) // 2
         draw.rounded_rectangle([bx, y, bx + box_w, y + box_h], radius=24,
                                fill=(*YELLOW, 40), outline=YELLOW, width=3)
@@ -196,26 +281,22 @@ def render_slide(slide: dict, idx: int, total: int,
         draw.text((kx + 2, y + 26 + 2), cta_palabra, font=kw_f, fill=(0, 0, 0, 120))
         draw.text((kx, y + 26), cta_palabra, font=kw_f, fill=YELLOW,
                   stroke_width=2, stroke_fill=YELLOW)
-        y += box_h + 48
-        draw_text(draw, subtitulo or "y te mando el tutorial completo.", y,
-                  font(proj_dir, 62), DIM, max_w=880)
-        if nombre_marca:
-            draw_text(draw, nombre_marca, y + 100, font(proj_dir, 52), PRIMARY)
+        y += box_h + 44
+        # Subtítulo + cierre (texto_extra) + handle, autoajustados al resto del lienzo
+        draw_fitted_block(draw, proj_dir, [
+            {"text": subtitulo or "y te mando el tutorial completo.", "size": 56, "bold": False, "color": WHITE, "gap": 22},
+            {"text": texto_extra, "size": 44, "bold": False, "color": DIM, "gap": 22},
+            {"text": nombre_marca, "size": 50, "bold": True, "color": PRIMARY, "gap": 0},
+        ], y_top=y, y_bottom=1850, anchor="top")
 
     else:
         # Slides genéricos: problema, revelacion, beneficios, prueba
-        # Contenido centrado en la zona media-baja del slide
-        y = 750
-        if titulo:
-            y = draw_text(draw, titulo, y, font(proj_dir, 96, bold=True), WHITE,
-                          max_w=940, stroke=1)
-            y += 28
-        if subtitulo:
-            y = draw_text(draw, subtitulo, y, font(proj_dir, 72), PRIMARY,
-                          max_w=900, stroke=2)
-            y += 28
-        if texto_extra:
-            draw_text(draw, texto_extra, y, font(proj_dir, 58), DIM, max_w=880)
+        y_top, y_bottom = pick_text_band(img, slide.get("texto_pos", "auto"), bool(foto))
+        draw_fitted_block(draw, proj_dir, [
+            {"text": titulo,    "size": 68, "bold": True,  "color": WHITE,   "stroke": 1, "gap": 22},
+            {"text": subtitulo, "size": 48, "bold": False, "color": PRIMARY, "stroke": 1, "gap": 18},
+            {"text": texto_extra, "size": 40, "bold": False, "color": DIM,   "gap": 0},
+        ], y_top=y_top, y_bottom=y_bottom)
 
     # ── Guardar ────────────────────────────────────────────────────────────────
     nombre = f"{idx:02d}-{tipo}.png"
@@ -232,6 +313,7 @@ def main():
     args = parser.parse_args()
 
     proj_dir = Path(args.proj_dir).resolve()
+    _load_dotenv(proj_dir)
     cfg = load_config(proj_dir)
     colors = colors_from_config(cfg)
 
