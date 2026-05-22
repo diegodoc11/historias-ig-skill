@@ -2,7 +2,7 @@
 
 > Genera secuencias de **historias de Instagram profesionales** para tu negocio con un solo comando en Claude Code. Le dictas la idea, y la IA elige la estructura narrativa, escribe el copy y crea todas las imágenes.
 
-Esta es una versión **mejorada y mantenida por [Diego Osorio (@soydiegoosorio)](https://instagram.com/soydiegoosorio)**, basada en el excelente trabajo original de **Horizontes IA** (ver [Créditos](#-créditos)).
+Versión mejorada y mantenida por **[Diego Osorio (@soydiegoosorio)](https://instagram.com/soydiegoosorio)**.
 
 ---
 
@@ -147,7 +147,8 @@ Si al ejecutar ves un error de “Python no encontrado” aunque lo tengas insta
 
 ## 🙏 Créditos
 
-- **Skill original:** [Horizontes IA](https://horizontesia.com) — academia de IA y automatización en español · repo original: [github.com/santmun/historias-ig-skill](https://github.com/santmun/historias-ig-skill). Todo el crédito de la idea y la base es suyo.
-- **Versión mejorada y mantenida por:** [Diego Osorio — @soydiegoosorio](https://instagram.com/soydiegoosorio).
+Versión mejorada y mantenida por **[Diego Osorio — @soydiegoosorio](https://instagram.com/soydiegoosorio)**: autoajuste de texto, colocación inteligente que no tapa la cara, corrección de rotación EXIF, integración con Telegram, modelo económico por defecto y más.
 
 Si esta skill te sirve, sígueme en [@soydiegoosorio](https://instagram.com/soydiegoosorio) para más automatizaciones con IA. 🚀
+
+<sub>Construido sobre la base de <a href="https://github.com/santmun/historias-ig-skill">historias-ig-skill</a> de Horizontes IA.</sub>
