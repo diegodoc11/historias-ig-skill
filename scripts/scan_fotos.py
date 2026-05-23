@@ -1,66 +1,57 @@
-#!/usr/bin/env python3
 """
-scan_fotos.py — Escanea la carpeta /fotos/ y genera catalogo.json
-con metadata básica de cada foto para que el generador las use.
+scan_fotos.py — Cataloga las imágenes de la carpeta fotos/ en catalogo.json.
 
-Uso: python3 scripts/scan_fotos.py [--proj-dir /ruta/al/proyecto]
+Uso: python scan_fotos.py --proj-dir /ruta/al/proyecto
 """
 
+import argparse
 import json
-import sys
 from pathlib import Path
 
+from PIL import Image, ImageOps
 
-EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+EXTENSIONES = {".jpg", ".jpeg", ".png", ".webp"}
 
 
-def scan(proj_dir: Path) -> list[dict]:
-    fotos_dir = proj_dir / "fotos"
+def catalogar(proj_dir: Path) -> list:
+    carpeta = proj_dir / "fotos"
     fotos = []
-
-    for f in sorted(fotos_dir.iterdir()):
-        if f.suffix.lower() not in EXTENSIONS:
+    if not carpeta.exists():
+        return fotos
+    for archivo in sorted(carpeta.iterdir()):
+        if archivo.suffix.lower() not in EXTENSIONES:
             continue
-
-        from PIL import Image
         try:
-            img = Image.open(f)
-            w, h = img.size
-            orientation = "portrait" if h > w else "landscape"
+            im = ImageOps.exif_transpose(Image.open(archivo))
+            ancho, alto = im.size
+            orientacion = "vertical" if alto >= ancho else "horizontal"
         except Exception:
-            w, h, orientation = 0, 0, "unknown"
-
+            ancho = alto = 0
+            orientacion = "desconocida"
         fotos.append({
-            "archivo": f.name,
-            "path": str(f),
-            "orientacion": orientation,
-            "ancho": w,
-            "alto": h,
-            "descripcion": "",  # El usuario puede llenar esto manualmente
-            "tags": [],         # El skill puede sugerir tags según el nombre
-            "usado_en": [],
+            "archivo": archivo.name,
+            "orientacion": orientacion,
+            "ancho": ancho,
+            "alto": alto,
+            "descripcion": "",
+            "tags": [],
         })
-
     return fotos
 
 
 def main():
-    import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--proj-dir", default=".", help="Directorio raíz del proyecto")
+    parser.add_argument("--proj-dir", default=".", help="Carpeta raíz del proyecto")
     args = parser.parse_args()
 
     proj_dir = Path(args.proj_dir).resolve()
-    fotos = scan(proj_dir)
+    fotos = catalogar(proj_dir)
+    (proj_dir / "catalogo.json").write_text(
+        json.dumps(fotos, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    catalogo_path = proj_dir / "catalogo.json"
-    catalogo_path.write_text(json.dumps(fotos, indent=2, ensure_ascii=False))
-
-    print(f"✅ {len(fotos)} foto(s) catalogada(s) → catalogo.json")
+    print(f"{len(fotos)} foto(s) catalogada(s) -> catalogo.json")
     for f in fotos:
-        print(f"   • {f['archivo']} ({f['orientacion']}, {f['ancho']}×{f['alto']})")
-
-    return fotos
+        print(f"  - {f['archivo']} ({f['orientacion']}, {f['ancho']}x{f['alto']})")
 
 
 if __name__ == "__main__":

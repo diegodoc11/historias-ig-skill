@@ -150,5 +150,3 @@ Si al ejecutar ves un error de “Python no encontrado” aunque lo tengas insta
 Versión mejorada y mantenida por **[Diego Osorio — @soydiegoosorio](https://instagram.com/soydiegoosorio)**: autoajuste de texto, colocación inteligente que no tapa la cara, corrección de rotación EXIF, integración con Telegram, modelo económico por defecto y más.
 
 Si esta skill te sirve, sígueme en [@soydiegoosorio](https://instagram.com/soydiegoosorio) para más automatizaciones con IA. 🚀
-
-<sub>Construido sobre la base de <a href="https://github.com/santmun/historias-ig-skill">historias-ig-skill</a> de Horizontes IA.</sub>

@@ -1,41 +1,50 @@
 """
-utils.py — Funciones de renderizado compartidas para historias de Instagram.
-Canvas: 1080x1920 RGBA
+utils.py — Utilidades de renderizado para historias y carruseles de Instagram.
+
+Lienzo por defecto: 1080 x 1920 (9:16). Tipografía: Space Grotesk.
+Implementación propia del pipeline de imagen (fondo, overlays, texto, guardado).
 """
 
+import json
 from pathlib import Path
+
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 
 W, H = 1080, 1920
 
 
-def load_config(proj_dir: Path) -> dict:
-    import json
-    cfg_path = proj_dir / "config.json"
-    if not cfg_path.exists():
-        raise FileNotFoundError("config.json no encontrado. Corre /historias-ig para configurar.")
-    return json.loads(cfg_path.read_text())
+# ── Configuración y color ────────────────────────────────────────────────────
+
+def load_config(proj_dir) -> dict:
+    cfg = Path(proj_dir) / "config.json"
+    if not cfg.exists():
+        raise FileNotFoundError(
+            "Falta config.json. Ejecuta /historias-ig para configurar tu marca.")
+    return json.loads(cfg.read_text(encoding="utf-8"))
+
+
+def _hex_to_rgb(value: str) -> tuple:
+    value = value.lstrip("#")
+    return tuple(int(value[i:i + 2], 16) for i in (0, 2, 4))
 
 
 def colors_from_config(cfg: dict) -> dict:
-    c = cfg.get("colores", {})
-    def hex2rgb(h: str) -> tuple:
-        h = h.lstrip("#")
-        return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+    paleta = cfg.get("colores", {}) or {}
     return {
-        "BG":       hex2rgb(c.get("fondo",    "#08080F")),
-        "PRIMARY":  hex2rgb(c.get("primario",  "#00E5FF")),
-        "WHITE":    (255, 255, 255),
-        "DIM":      (180, 185, 195),
-        "YELLOW":   (255, 230, 50),
+        "BG": _hex_to_rgb(paleta.get("fondo", "#08080F")),
+        "PRIMARY": _hex_to_rgb(paleta.get("primario", "#00E5FF")),
+        "WHITE": (255, 255, 255),
+        "DIM": (180, 185, 195),
+        "YELLOW": (255, 230, 50),
     }
 
 
-def font(proj_dir: Path, size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    fname = "SpaceGrotesk-Bold.ttf" if bold else "SpaceGrotesk-Variable.ttf"
-    path = proj_dir / "fonts" / fname
+# ── Tipografía y lienzo ──────────────────────────────────────────────────────
+
+def font(proj_dir, size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
+    nombre = "SpaceGrotesk-Bold.ttf" if bold else "SpaceGrotesk-Variable.ttf"
     try:
-        return ImageFont.truetype(str(path), size)
+        return ImageFont.truetype(str(Path(proj_dir) / "fonts" / nombre), size)
     except Exception:
         return ImageFont.load_default()
 
@@ -44,89 +53,103 @@ def new_canvas(colors: dict) -> Image.Image:
     return Image.new("RGBA", (W, H), (*colors["BG"], 255))
 
 
-def load_bg(path: str | Path, darken: float = 0.55, blur: int = 0) -> Image.Image:
-    bg = Image.open(path)
-    bg = ImageOps.exif_transpose(bg)   # respeta la orientación EXIF (fotos de cámara/celular)
-    bg = bg.convert("RGBA")
-    r = max(W / bg.width, H / bg.height)
-    nw, nh = int(bg.width * r), int(bg.height * r)
-    bg = bg.resize((nw, nh), Image.LANCZOS)
-    l, t = (nw - W) // 2, (nh - H) // 2
-    bg = bg.crop((l, t, l + W, t + H))
+# ── Fondos ───────────────────────────────────────────────────────────────────
+
+def load_bg(path, darken: float = 0.55, blur: int = 0) -> Image.Image:
+    """Abre una imagen, respeta su orientación EXIF, la recorta tipo 'cover' al
+    lienzo y le aplica un oscurecido uniforme."""
+    src = ImageOps.exif_transpose(Image.open(path)).convert("RGBA")
+    factor = max(W / src.width, H / src.height)
+    src = src.resize((round(src.width * factor), round(src.height * factor)), Image.LANCZOS)
+    x = (src.width - W) // 2
+    y = (src.height - H) // 2
+    bg = src.crop((x, y, x + W, y + H))
     if blur:
         bg = bg.filter(ImageFilter.GaussianBlur(blur))
-    overlay = Image.new("RGBA", (W, H), (0, 0, 0, int(255 * darken)))
-    bg.alpha_composite(overlay)
+    if darken > 0:
+        bg.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, int(255 * darken))))
     return bg
 
 
 def gradient_overlay(img: Image.Image, direction: str = "bottom", strength: float = 0.80):
-    grad = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    d = ImageDraw.Draw(grad)
-    for i in range(H):
+    """Aplica un degradado negro (para legibilidad del texto) en una dirección."""
+    column = Image.new("L", (1, H), 0)
+    px = column.load()
+    for y in range(H):
         if direction == "top":
-            t = 1 - i / H
-        elif direction == "bottom":
-            t = i / H
+            t = 1 - y / H
+        elif direction == "center":
+            t = abs(y / H - 0.5) * 2
+        else:  # bottom
+            t = y / H
+        px[0, y] = int(255 * strength * (t ** 1.5))
+    alpha = column.resize((W, H))
+    veil = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    veil.putalpha(alpha)
+    img.alpha_composite(veil)
+
+
+# ── Texto ────────────────────────────────────────────────────────────────────
+
+def _wrap(draw, text, fnt, max_w):
+    palabras = str(text).split()
+    lineas, actual = [], []
+    for p in palabras:
+        prueba = " ".join(actual + [p])
+        if actual and draw.textlength(prueba, font=fnt) > max_w:
+            lineas.append(" ".join(actual))
+            actual = [p]
         else:
-            t = abs(i / H - 0.5) * 2
-        alpha = int(255 * strength * (t ** 1.5))
-        d.line([(0, i), (W, i)], fill=(0, 0, 0, alpha))
-    img.alpha_composite(grad)
+            actual.append(p)
+    if actual:
+        lineas.append(" ".join(actual))
+    return lineas
 
 
-def draw_text(draw, text: str, y: int, fnt, color=(255, 255, 255),
-              max_w: int = 940, line_gap: int = 14, shadow: bool = True,
-              stroke: int = 0) -> int:
-    """Texto centrado con word-wrap. Retorna el y final."""
-    words = text.split()
-    lines, cur = [], []
-    for word in words:
-        test = " ".join(cur + [word])
-        bb = draw.textbbox((0, 0), test, font=fnt)
-        if bb[2] - bb[0] > max_w and cur:
-            lines.append(" ".join(cur))
-            cur = [word]
-        else:
-            cur.append(word)
-    if cur:
-        lines.append(" ".join(cur))
-
-    lh = fnt.size + line_gap
-    for line in lines:
-        bb = draw.textbbox((0, 0), line, font=fnt)
-        x = (W - (bb[2] - bb[0])) // 2
+def draw_text(draw, text, y, fnt, color=(255, 255, 255), max_w=940,
+              line_gap=14, shadow=True, stroke=0):
+    """Texto centrado horizontalmente con ajuste de línea. Devuelve la y final."""
+    alto_linea = fnt.size + line_gap
+    for linea in _wrap(draw, text, fnt, max_w):
+        ancho = draw.textlength(linea, font=fnt)
+        x = (W - ancho) // 2
         if shadow:
-            draw.text((x + 3, y + 3), line, font=fnt, fill=(0, 0, 0, 160))
-        draw.text((x, y), line, font=fnt, fill=color,
+            draw.text((x + 3, y + 3), linea, font=fnt, fill=(0, 0, 0, 160))
+        draw.text((x, y), linea, font=fnt, fill=color,
                   stroke_width=stroke, stroke_fill=color if stroke else None)
-        y += lh
+        y += alto_linea
     return y
 
 
-def draw_pill(draw, text: str, y: int, fnt, bg_color, text_color=(8, 8, 16)):
-    """Píldora centrada con texto."""
-    bb = draw.textbbox((0, 0), text, font=fnt)
-    pw, ph = bb[2] - bb[0] + 52, bb[3] - bb[1] + 26
+def draw_pill(draw, text, y, fnt, bg_color, text_color=(8, 8, 16)):
+    """Etiqueta tipo 'píldora' centrada."""
+    ancho_txt = draw.textlength(text, font=fnt)
+    pw, ph = int(ancho_txt) + 56, fnt.size + 30
     px = (W - pw) // 2
-    draw.rounded_rectangle([px, y, px + pw, y + ph], radius=ph // 2, fill=(*bg_color, 230))
-    draw.text((px + 26, y + 13), text, font=fnt, fill=text_color)
+    draw.rounded_rectangle([px, y, px + pw, y + ph], radius=ph // 2, fill=(*bg_color, 235))
+    draw.text((px + 28, y + 15), text, font=fnt, fill=text_color)
     return y + ph
 
 
-def progress_bar(draw, current: int, total: int, primary_color):
-    """Barra de progreso en la parte superior."""
-    seg_w = (W - 24 * (total + 1)) // total
+def progress_bar(draw, current, total, primary):
+    """Barra segmentada de progreso en la parte superior."""
+    margen, sep = 24, 12
+    ancho_seg = (W - 2 * margen - sep * (total - 1)) // max(total, 1)
+    x = margen
     for i in range(total):
-        x = 24 + i * (seg_w + 24)
-        color = (*primary_color, 255) if i < current else (255, 255, 255, 80)
-        draw.rounded_rectangle([x, 28, x + seg_w, 32], radius=2, fill=color)
+        color = (*primary, 255) if i < current else (255, 255, 255, 90)
+        draw.rounded_rectangle([x, 26, x + ancho_seg, 32], radius=3, fill=color)
+        x += ancho_seg + sep
 
 
-def save(img: Image.Image, output_dir: Path, name: str) -> Path:
-    flat = Image.new("RGB", (W, H))
-    flat.paste(img.convert("RGB"), mask=img.split()[3] if img.mode == "RGBA" else None)
-    path = output_dir / name
-    flat.save(path, "PNG", optimize=True)
-    print(f"  ✅ {name}")
-    return path
+# ── Guardado ─────────────────────────────────────────────────────────────────
+
+def save(img: Image.Image, output_dir, name: str) -> Path:
+    """Aplana sobre negro y guarda como PNG optimizado."""
+    plano = Image.new("RGB", (W, H), (0, 0, 0))
+    mask = img.split()[3] if img.mode == "RGBA" else None
+    plano.paste(img.convert("RGB"), mask=mask)
+    destino = Path(output_dir) / name
+    plano.save(destino, "PNG", optimize=True)
+    print(f"  generado: {name}")
+    return destino
