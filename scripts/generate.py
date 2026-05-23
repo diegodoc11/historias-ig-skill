@@ -250,7 +250,7 @@ def render_slide(slide: dict, idx: int, total: int,
 
     if tipo == "hook":
         # Etiqueta en la parte superior
-        draw_pill(draw, cfg.get("etiqueta_hook", "NUEVA HISTORIA"), 120,
+        draw_pill(draw, slide.get("etiqueta") or cfg.get("etiqueta_hook", "NUEVA HISTORIA"), 120,
                   font(proj_dir, 34), PRIMARY)
         # Título + subtítulo + extra, autoajustados a la banda más despejada
         y_top, y_bottom = pick_text_band(img, slide.get("texto_pos", "auto"), bool(foto))
