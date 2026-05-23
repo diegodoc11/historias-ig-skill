@@ -150,22 +150,36 @@ El **hook** lleva el fondo más impactante. El texto se coloca solo en la zona d
 
 ---
 
-## ONBOARDING (primer uso)
+## ONBOARDING (primer uso) — Brief de Marca
 
-Si no existe `config.json`, pregunta una por una:
+Si no existe `config.json`, construye el **brief**. El brief es lo que hace que el copy sea personalizado y persuasivo (sin él, el contenido sale genérico). Ofrece dos modos:
 
-1. **¿Nombre de tu marca o negocio?** → `nombre_marca`
+> "¿Llenamos tu brief en modo **LIBRE** (me cuentas tu negocio y tu historia como a un amigo, yo extraigo lo demás y solo te pregunto lo que falte) o **ESTRUCTURADO** (sección por sección)?"
+
+### A. Identidad (siempre)
+1. **Nombre de marca/negocio** → `nombre_marca`
 2. **¿A qué se dedica? (1-2 oraciones)** → `descripcion_negocio`
-3. **¿Tu nombre?** → `nombre_usuario`
-4. **¿Usuario de Instagram?** → `instagram_user` (agrega @ si falta)
-5. **¿Colores de marca?**
-   - a) Códigos hex (fondo + primario)
-   - b) Paleta por defecto (oscuro con cyan)
-   - c) Elegir: `oscuro-cyan` (#08080F / #00E5FF) | `oscuro-naranja` (#0D0A08 / #FF6B35) | `oscuro-verde` (#080F09 / #00E676) | `claro-profesional` (#F8F9FA / #1A1A2E)
-   → `colores: { fondo, primario }`
-6. **¿Cuenta en Kie AI?** Si sí, pide agregar `KIE_AI_API_KEY` en `{{PROJ_DIR}}/.env`.
-7. **¿Tu CTA habitual?** (ej: "Comenta [PALABRA] y te envío [algo]") → `cta_formato`
-8. **¿Etiqueta del hook por defecto?** (ej: "HOY TE ENSEÑO") → `etiqueta_hook`
+3. **Tu nombre** → `nombre_usuario`
+4. **Usuario de Instagram** → `instagram_user` (agrega @ si falta)
+5. **Colores de marca:** a) hex (fondo + primario) · b) por defecto (oscuro-cyan) · c) `oscuro-cyan` (#08080F/#00E5FF) | `oscuro-naranja` (#0D0A08/#FF6B35) | `oscuro-verde` (#080F09/#00E676) | `claro-profesional` (#F8F9FA/#1A1A2E) → `colores`
+6. **¿Kie AI?** Si sí, agregar `KIE_AI_API_KEY` en `{{PROJ_DIR}}/.env`.
+7. **CTA habitual** (ej: "Comenta [PALABRA] y te envío [algo]") → `cta_formato`
+8. **Etiqueta del hook por defecto** (ej: "HOY TE ENSEÑO") → `etiqueta_hook`
+
+### B. Brief estratégico (para copy ultra-personalizado)
+9. **Avatar / cliente ideal:** quién es (demografía + psicografía), su situación actual y qué quiere lograr → `avatar`
+10. **Mapa de dolores (4 niveles)** → `dolores`:
+    - **externo:** el problema visible/práctico.
+    - **interno:** cómo lo hace sentir (frustración, miedo, vergüenza).
+    - **relacional:** cómo afecta su estatus/relaciones.
+    - **filosófico:** la injusticia profunda. *Debe pasar el Test de Amenaza Concreta:* ¿qué le pasa, en cuánto tiempo, si no lo resuelve? (concreto, no abstracto).
+11. **Deseos / transformación buscada** → `deseos`
+12. **Banco de auto-aplicación:** 3–8 momentos en que lo que vendes te ayudó a ti mismo (para Relacionamiento y Niveles de Consciencia) → `banco_auto_aplicacion` (lista)
+13. **Creencias del nicho:** mitos populares, verdades incómodas, prácticas saturadas con las que no estás de acuerdo (para Polarización) → `creencias_nicho` (lista)
+14. **Oferta principal + ticket:** qué vendes y rango de precio (low <$300 / mid $300–$1.000 / high >$1.000) → `oferta` (activa las reglas de precio en Conversión)
+15. **Tono/voz:** frases que repites, registro (cercano/técnico), qué evitar → `tono`
+
+Si el usuario tiene poco tiempo, captura mínimo: identidad (A) + avatar + dolores + 3 momentos de banco. El resto se puede completar después con `/historias-ig reconfigurar`.
 
 Crear `{{PROJ_DIR}}/config.json`:
 ```json
@@ -177,9 +191,18 @@ Crear `{{PROJ_DIR}}/config.json`:
   "etiqueta_hook": "...",
   "colores": { "fondo": "#0D0A08", "primario": "#FF6B35" },
   "kie_ai_key": null,
-  "cta_formato": "Comenta [PALABRA] y te envío [algo]"
+  "cta_formato": "Comenta [PALABRA] y te envío [algo]",
+  "avatar": "...",
+  "dolores": { "externo": "...", "interno": "...", "relacional": "...", "filosofico": "..." },
+  "deseos": "...",
+  "banco_auto_aplicacion": ["...", "..."],
+  "creencias_nicho": ["...", "..."],
+  "oferta": { "descripcion": "...", "ticket": "low | mid | high" },
+  "tono": "..."
 }
 ```
+
+> 📌 **Uso del brief al crear contenido (Paso 5):** Relacionamiento → usa `banco_auto_aplicacion`; Polarización → usa `creencias_nicho`; Niveles de Consciencia → usa `dolores` (agita el dolor concreto); Conversión → usa `oferta` + reglas de precio; Autoridad → usa credenciales/casos; siempre habla al `avatar` con su `tono`.
 
 Luego escanea fotos (Paso 4). Si no hay fotos, indica agregarlas en `{{PROJ_DIR}}/fotos/`.
 
