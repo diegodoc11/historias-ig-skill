@@ -204,6 +204,44 @@ def pick_text_band(img, pos="auto", has_foto=False):
     return bands["top"] if lum(250, 980) <= lum(1060, 1830) else bands["bottom"]
 
 
+def draw_badges(img, draw, proj_dir, names, y=150):
+    """Fila centrada de 'chips' de marca. Usa logos/<slug>.png si existe;
+    si no, muestra el nombre en un chip blanco."""
+    if not names:
+        return
+    fnt = font(proj_dir, 30, bold=True)
+    h, gap, pad = 66, 18, 26
+    specs = []
+    for name in names:
+        slug = "".join(c for c in name.lower() if c.isalnum())
+        logo = proj_dir / "logos" / f"{slug}.png"
+        if logo.exists() and logo.stat().st_size > 1000:
+            specs.append(("img", logo, name, int(h * 1.9)))
+        else:
+            bb = draw.textbbox((0, 0), name, font=fnt)
+            specs.append(("txt", None, name, (bb[2] - bb[0]) + pad * 2))
+    total_w = sum(w for *_, w in specs) + gap * (len(specs) - 1)
+    x = (W - total_w) // 2
+    for kind, path, name, w in specs:
+        draw.rounded_rectangle([x, y, x + w, y + h], radius=h // 2, fill=(255, 255, 255, 240))
+        if kind == "txt":
+            bb = draw.textbbox((0, 0), name, font=fnt)
+            draw.text((x + (w - (bb[2] - bb[0])) // 2, y + (h - (bb[3] - bb[1])) // 2 - bb[1]),
+                      name, font=fnt, fill=(12, 12, 16))
+        else:
+            try:
+                lg = Image.open(path).convert("RGBA")
+                lh = h - 22
+                lw = int(lg.width * (lh / lg.height))
+                if lw > w - 20:
+                    lw, lh = w - 20, int(lg.height * ((w - 20) / lg.width))
+                lg = lg.resize((lw, lh), Image.LANCZOS)
+                img.alpha_composite(lg, (x + (w - lw) // 2, y + (h - lh) // 2))
+            except Exception:
+                pass
+        x += w + gap
+
+
 def render_slide(slide: dict, idx: int, total: int,
                  proj_dir: Path, cfg: dict, colors: dict,
                  kie_cache: dict, kie_key: str | None,
@@ -242,6 +280,9 @@ def render_slide(slide: dict, idx: int, total: int,
 
     # ── Barra de progreso ──────────────────────────────────────────────────────
     progress_bar(draw, idx, total, PRIMARY)
+
+    # ── Logos / chips de marca ───────────────────────────────────────────────────
+    draw_badges(img, draw, proj_dir, slide.get("logos", []))
 
     # ── Contenido según tipo ───────────────────────────────────────────────────
     titulo = slide.get("titulo", "")
