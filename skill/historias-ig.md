@@ -94,7 +94,7 @@ Sigue la estructura del tipo elegido en la biblioteca. Aplica **persuasión real
 }
 ```
 
-Muestra el plan al usuario en formato legible y pide confirmación.
+**⚠️ REGLA DE ORO — aprobar el copy antes de generar:** Muestra al usuario el **copy EXACTO de cada slide** (título, subtítulo, texto extra, CTA, etiqueta) en texto legible, slide por slide. **Espera su aprobación explícita.** NUNCA ejecutes `generate.py` hasta que el usuario apruebe el copy. Si pide cambios, ajústalos y vuelve a mostrar el copy completo. Generar sin copy aprobado causa errores y desperdicia créditos de IA.
 
 **Paso 6 — Guardar el plan y generar**
 
