@@ -13,3 +13,7 @@ plan.json
 fonts/*.ttf
 fonts/*.otf
 logos/
+
+# Otros proyectos (no se publican aqui)
+bellanova/
+scripts/gen_carrusel*.py

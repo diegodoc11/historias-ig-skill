@@ -51,7 +51,13 @@ Para elegir fotos que NO tapen elementos importantes, consulta `{{PROJ_DIR}}/cat
 
 **Paso 5 — Crear el plan de slides**
 
-Sigue la estructura del tipo elegido en la biblioteca. Aplica **persuasión real**: dolor concreto (con consecuencia y horizonte), deseo, prueba, manejo de objeción, y un cierre con mecánica de interacción o palabra clave → recurso.
+Sigue la estructura del tipo elegido en la biblioteca y **APLICA SIEMPRE la Capa de Persuasión** (sección 🧨 de `biblioteca-contenido.md`):
+
+- Cada slide debe pegar ≥3 de los **4 ángulos**: dolor · automatización · beneficio · resultado concreto.
+- **Especificidad numérica** (3×, 60s, +100K, +1M USD) en vez de "más" / "mejor".
+- **Antes/Después** (Halbert): contrasta el "antes manual" con el "ahora automático".
+- **Foco en el lector** ("tu negocio", "TU competencia"), no solo en el autor.
+- **Reescribe siempre el primer borrador descriptivo.** Nunca presentes copy plano al usuario; pásalo antes por el checklist de la Capa de Persuasión.
 
 **Reglas por slide:**
 - `tipo`: `hook` para el primero, `cta` para el último; nombres descriptivos para los intermedios (`problema`, `revelacion`, `paso1`, `voto`, etc.).

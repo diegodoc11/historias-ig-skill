@@ -29,6 +29,63 @@ Relacionamiento 15–20% · Engagement 20–30% · Polarización 5–10% · Tran
 
 ---
 
+## 🧨 Capa de Persuasión (aplica a TODOS los tipos)
+
+Toda pieza de valor —no solo el hook— debe **vender mientras informa**. El primer borrador casi siempre es descriptivo, no persuasivo: **reescribir es la norma**.
+
+### Los 4 ángulos (todo slide de herramienta/transformación/resultado debe pegar ≥3)
+1. **Dolor** — lo que era manual / lento / caro antes.
+2. **Automatización** — lo que la IA o el sistema hace **solo** ("se monta solo", "nunca duerme", "ejecuta por mí").
+3. **Beneficio** — qué gana el lector (no qué hace el producto).
+4. **Resultado concreto** — una **cifra específica** (3×, 60s, +100K, +1M USD).
+
+### Especificidad > generalidad (Ogilvy / Hopkins)
+- ❌ "Más rápido" · "mucho mejor" · "vende más"
+- ✅ "3× más rápido" · "+100K en 30 días" · "+1M USD vendidos"
+
+### Antes vs Después (Halbert)
+El contraste antes/después convence ~10× más que una afirmación plana.
+- ❌ "Lanzo campañas rápido."
+- ✅ "Antes me tomaba 3 horas. Ahora se monta solo en 30 segundos."
+
+### Tipos de hook que pegan
+- **Identidad / cambio:** "Dejé de [X]. Ahora [Y]."
+- **Before/After:** "Antes [X]. Ahora [Y]."
+- **Vs. competencia:** "Mientras tú [X], tu competencia ya [Y]."
+- **Aspiracional:** "[Resultado] mientras [duermo / viajo / vivo desde la playa]."
+- **Autoridad específica:** "[Cifra] que [transformación]." (ej: *"Estas 5 IAs hicieron el 90% de mi trabajo. Y vendí +1M USD."*)
+- **Pregunta-trampa al ego:** "¿Estás haciendo X mientras tu competencia ya hace Y?"
+
+### Banco de frases de poder
+- "Es como tener publicidad gratis."
+- "Antes que tu competencia."
+- "Trabajan por mí mientras [duermo / viajo]."
+- "Se monta solo." / "Habla como humano y nunca duerme."
+- "Sin diseñador, sin excusas, sin perder tu tiempo."
+- "Los negocios del futuro no se crean con herramientas del pasado."
+- "Lo que antes te tomaba [X], ahora toma [Y]."
+
+### Foco en el lector (Ogilvy)
+- ❌ Solo "yo lo uso, yo logré".
+- ✅ Combina: "yo lo uso" + "tú lo puedes montar en TU negocio".
+- **El slide de cierre/voto SIEMPRE le habla al "tú"** (no al "yo").
+
+### Checklist antes de aprobar el copy de un slide (≥3 de 5)
+- [ ] Tiene una **cifra específica** (no "más", sino "3×" o "60s").
+- [ ] Hay un **antes/después** claro.
+- [ ] La **automatización** está dicha ("solo", "se monta solo", "sin hacer nada").
+- [ ] Resuelve un **dolor reconocible** del avatar.
+- [ ] El lector siente que es **para él**, no solo presumir.
+
+Si fallan 3 o más → **reescribir**, no aprobar.
+
+### Regla operativa de reescritura
+NUNCA mostrar al usuario un primer borrador descriptivo. Pasa **cada slide** por la Capa de Persuasión antes de presentarlo.
+- ❌ Descriptivo: *"Le hablo a la IA y ejecuta."*
+- ✅ Persuasivo: *"Dejé de escribirle a la IA. Ahora le hablo 30 segundos y ejecuta horas de trabajo."*
+
+---
+
 ## 1. RELACIONAMIENTO — *confianza antes de la venta*
 **Embudo:** TOFU/MOFU · **Mix:** 15–20% · **Formato:** Reel/carrusel narrativo, historia.
 **Sub-categorías:** Origen · Tras bambalinas (BTS) · Vulnerabilidad presente · Valores/creencias · Momentos pivote · Tribu.
