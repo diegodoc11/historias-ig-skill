@@ -204,42 +204,84 @@ def pick_text_band(img, pos="auto", has_foto=False):
     return bands["top"] if lum(250, 980) <= lum(1060, 1830) else bands["bottom"]
 
 
-def draw_badges(img, draw, proj_dir, names, y=150):
-    """Fila centrada de 'chips' de marca. Usa logos/<slug>.png si existe;
-    si no, muestra el nombre en un chip blanco."""
+def draw_badges(img, draw, proj_dir, names, y=130):
+    """Chips de marca como protagonistas. Auto-escala al tamaño más grande
+    posible (hasta ~3× lo anterior). Si son muchos, se acomodan en 2 filas
+    para mantener el tamaño grande. Usa logos/<slug>.png si existe; si no,
+    muestra el nombre en un chip blanco."""
     if not names:
         return
-    fnt = font(proj_dir, 30, bold=True)
-    h, gap, pad = 66, 18, 26
-    specs = []
-    for name in names:
-        slug = "".join(c for c in name.lower() if c.isalnum())
-        logo = proj_dir / "logos" / f"{slug}.png"
-        if logo.exists() and logo.stat().st_size > 1000:
-            specs.append(("img", logo, name, int(h * 1.9)))
-        else:
-            bb = draw.textbbox((0, 0), name, font=fnt)
-            specs.append(("txt", None, name, (bb[2] - bb[0]) + pad * 2))
-    total_w = sum(w for *_, w in specs) + gap * (len(specs) - 1)
-    x = (W - total_w) // 2
-    for kind, path, name, w in specs:
-        draw.rounded_rectangle([x, y, x + w, y + h], radius=h // 2, fill=(255, 255, 255, 240))
-        if kind == "txt":
-            bb = draw.textbbox((0, 0), name, font=fnt)
-            draw.text((x + (w - (bb[2] - bb[0])) // 2, y + (h - (bb[3] - bb[1])) // 2 - bb[1]),
-                      name, font=fnt, fill=(12, 12, 16))
-        else:
-            try:
-                lg = Image.open(path).convert("RGBA")
-                lh = h - 22
-                lw = int(lg.width * (lh / lg.height))
-                if lw > w - 20:
-                    lw, lh = w - 20, int(lg.height * ((w - 20) / lg.width))
-                lg = lg.resize((lw, lh), Image.LANCZOS)
-                img.alpha_composite(lg, (x + (w - lw) // 2, y + (h - lh) // 2))
-            except Exception:
-                pass
-        x += w + gap
+    max_w = 980
+
+    def build_specs(items, h):
+        gap = max(14, h // 8)
+        pad = max(20, h // 3)
+        fnt = font(proj_dir, max(26, int(h * 0.40)), bold=True)
+        specs = []
+        for name in items:
+            slug = "".join(c for c in name.lower() if c.isalnum())
+            lp = proj_dir / "logos" / f"{slug}.png"
+            if lp.exists() and lp.stat().st_size > 1000:
+                specs.append(("img", lp, name, int(h * 1.9), fnt))
+            else:
+                bb = draw.textbbox((0, 0), name, font=fnt)
+                specs.append(("txt", None, name, (bb[2] - bb[0]) + pad * 2, fnt))
+        return specs, gap
+
+    def pack(specs, gap):
+        rows = []
+        cur, cur_w = [], 0
+        for sp in specs:
+            w = sp[3]
+            if cur and cur_w + gap + w > max_w:
+                rows.append((cur, cur_w))
+                cur, cur_w = [sp], w
+            else:
+                cur_w = cur_w + gap + w if cur else w
+                cur.append(sp)
+        if cur:
+            rows.append((cur, cur_w))
+        return rows
+
+    # Elegimos el h más grande que produzca <= 2 filas (chips grandes)
+    chosen = None
+    for h in (200, 180, 160, 140, 120, 100):
+        specs, gap = build_specs(names, h)
+        rows = pack(specs, gap)
+        if len(rows) <= 2:
+            chosen = (h, gap, rows)
+            break
+    if chosen is None:
+        h_fallback = 90
+        specs, gap = build_specs(names, h_fallback)
+        chosen = (h_fallback, gap, pack(specs, gap))
+
+    h, gap, rows = chosen
+    cur_y = y
+    for row, row_w in rows:
+        x = (W - row_w) // 2
+        for kind, path, name, w, fnt in row:
+            draw.rounded_rectangle([x, cur_y, x + w, cur_y + h], radius=h // 2,
+                                   fill=(255, 255, 255, 240))
+            if kind == "txt":
+                bb = draw.textbbox((0, 0), name, font=fnt)
+                draw.text((x + (w - (bb[2] - bb[0])) // 2,
+                           cur_y + (h - (bb[3] - bb[1])) // 2 - bb[1]),
+                          name, font=fnt, fill=(12, 12, 16))
+            else:
+                try:
+                    lg = Image.open(path).convert("RGBA")
+                    lh = h - int(h * 0.22)
+                    lw = int(lg.width * (lh / lg.height))
+                    if lw > w - int(h * 0.3):
+                        lw = w - int(h * 0.3)
+                        lh = int(lg.height * (lw / lg.width))
+                    lg = lg.resize((max(1, lw), max(1, lh)), Image.LANCZOS)
+                    img.alpha_composite(lg, (x + (w - lw) // 2, cur_y + (h - lh) // 2))
+                except Exception:
+                    pass
+            x += w + gap
+        cur_y += h + 16
 
 
 def render_slide(slide: dict, idx: int, total: int,
